@@ -7,7 +7,7 @@
 #include "Phi.hpp"
 #include "solveEikonalLocalProblem.hpp"
 #include <iostream>
-#
+
 int main()
 {
     // create a simplex
