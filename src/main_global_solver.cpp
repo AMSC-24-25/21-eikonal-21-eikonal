@@ -1,8 +1,6 @@
 /*
- * main_eikonal.cpp
- *
- *  Created on: Jun 18, 2022
- *      Author: forma
+ * FILE D'ESEMPIO CHE CONTERRA' IL MAIN DEL RISOLUTORE GLOBALE
+ * 
  */
 #include "Phi.hpp"
 #include "solveEikonalLocalProblem.hpp"
