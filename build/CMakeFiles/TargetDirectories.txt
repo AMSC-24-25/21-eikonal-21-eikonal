@@ -1,0 +1,3 @@
+/home/nico/21-eikonal-21-eikonal/build/CMakeFiles/global_solver.dir
+/home/nico/21-eikonal-21-eikonal/build/CMakeFiles/edit_cache.dir
+/home/nico/21-eikonal-21-eikonal/build/CMakeFiles/rebuild_cache.dir
