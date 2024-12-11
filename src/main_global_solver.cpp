@@ -1,75 +1,128 @@
-/*
- * FILE D'ESEMPIO CHE CONTERRA' IL MAIN DEL RISOLUTORE GLOBALE
- * 
- */
-#include "Phi.hpp"
-#include "solveEikonalLocalProblem.hpp"
-#include "SimplexData.hpp"
 #include <iostream>
+#include <vector>
+#include <queue>
+#include <limits>
+#include <cmath>
+#include <omp.h>
+#include <unordered_map>
 
-int main()
-{
-    // create a simplex
-#if DIMENSION==2
-    constexpr std::size_t PHDIM=2;
+#include "solveEikonalLocalProblem.hpp"
 
-    using Point=Eikonal::Eikonal_traits<PHDIM>::Point;
-    using VectorExt=Eikonal::Eikonal_traits<PHDIM>::VectorExt;
-    Point p1,p2,p3,p4;
-    p1<<0.,0.1;
-    p2<<0.,1.5;
-    p3<<1.,0.;
-    p4<<0.1,0.;
+const double INF = std::numeric_limits<double>::infinity();
+const double EPSILON = 1e-6;
+constexpr std::size_t PHDIM = 2;
 
-    Eikonal::Eikonal_traits<PHDIM>::MMatrix M;
-    M<<3.0,0.0,
-       0.0,9.0;
-    VectorExt values;
-    values<<1.,2.;          //values of u at the base
-    Eikonal::SimplexData<PHDIM> simplex{{p1,p2,p3},M};
+struct Node {
+    using Point = Eikonal::Eikonal_traits<PHDIM>::Point;
 
-    Eikonal::solveEikonalLocalProblem<PHDIM> solver{simplex,values};
-    auto sol = solver();
-    std::cout<<"Solution="<<sol.value<<" lambda:"<<sol.lambda.transpose()<<" status:"<<sol.status<<"\n";
-#else
-    constexpr std::size_t PHDIM=3;
-/*
- * tetra
-[[0.1 0.2 0.5]
- [0.2 0.1 0.5]
- [0.1 0.1 0.5]
- [0.2 0.1 0.4]]
-values
-[[4.04806282e-01]
- [4.04806776e-01]
- [1.00000000e+07]]
- */
-    using Point=Eikonal::Eikonal_traits<PHDIM>::Point;
-    using VectorExt=Eikonal::Eikonal_traits<PHDIM>::VectorExt;
-    Point p1,p2,p3,p4;
-    p1<<0.1, 0.2, 0.5;
-    p2<<0.2,0.1,0.5;
-    p3<<0.1,0.1,0.5;
-    p4<<0.2,0.1,0.4;
+    unsigned int id;
+    double u;
+    bool isSource;
+    Point p;
+    //std::vector<int> neighbors;
+};
+
+struct Mesh_element {
+    std::array<Node,PHDIM+1u> vertex;
+};
 
 
-    Eikonal::Eikonal_traits<PHDIM>::MMatrix M;
-    M<<1.0,-0.0,0.0,
-       0.0,1.0,-0.0,
-       0.0,-0.0,1.0;
-    VectorExt values;
-    values<<1.,1.,1.00000000;
-    for (auto i=0; i<10;++i) // a few values, just to try what happens
-        {
-          values[1]=0.+0.5*i;
-          p1[1]=0.1+i/10.;
-    Eikonal::SimplexData<PHDIM> simplex{{p1,p2,p3,p4},M};
-    Eikonal::solveEikonalLocalProblem<PHDIM> solver{std::move(simplex),
-          values};
-    auto sol = solver();
-    std::cout<<"Solution="<<sol.value<<" lambda:"<<sol.lambda.transpose()<<" status:"<<sol.status<<"\n";
+void initialize( std::vector<Mesh_element>& mesh, std::queue<int>& activeList, std::unordered_map<unsigned int, std::vector<Mesh_element>>& nodeToElements) {
+    for (auto& m_element : mesh) {
+        for (auto& node : m_element.vertex) {
+            if (node.isSource) {
+                node.u = 0.0;
+            } else {
+                node.u = INF;
+            }
         }
+    }
+    
+    for (const auto& pair : nodeToElements) {
+        for (auto& mesh_element : pair.second) {
+            for (auto& node : mesh_element.vertex) {
+                if (pair.first != node.id && node.isSource) {
+                    activeList.push(pair.first);
+                }
+            }
+        }
+    }
+}
 
-#endif
+double solveLocalProblem(const Node& node) {
+    // Implement the local solver here
+    // This is a placeholder implementation
+    return node.u;
+}
 
+void update(std::vector<Node>& nodes, std::queue<int>& activeList, ) {
+    while (!activeList.empty()) {
+        int currentNodeId = activeList.front();
+        activeList.pop();
+
+        Node& currentNode = nodes[currentNodeId];
+        double oldU = currentNode.u;
+        double newU = solveLocalProblem(currentNode);
+        //Eikonal::solveEikonalLocalProblem<PHDIM> solver{std::move(simplex), values};
+
+        if (std::abs(oldU - newU) < EPSILON) {
+            currentNode.u = newU;
+            for (int neighborId : currentNode.neighbors) {
+                Node& neighbor = nodes[neighborId];
+                if (neighbor.u > newU) {
+                    neighbor.u = newU;
+                    activeList.push(neighborId);
+                }
+            }
+        }
+    }
+}
+
+int main() {
+    using Point = Eikonal::Eikonal_traits<PHDIM>::Point;
+    
+    // Example setup for 2D triangular mesh or 3D tetrahedral mesh
+    
+    Point p1,p2,p3,p4;
+    p1<<0.,0.;
+    p2<<0.,1.;
+    p3<<1.,1.;
+    p4<<1.,0.;
+
+    Node n1, n2, n3, n4;
+    n1 = {0, 0.0, true, p1};
+    n2 = {1, 0.0, true, p2};
+    n3 = {2, 0.0, false, p3};
+    n4 = {3, 0.0, true, p4};
+
+    Mesh_element m1, m2;
+    m1.vertex = {n1, n2, n3};
+    m2.vertex = {n1, n4, n3};
+
+    std::vector<Mesh_element> mesh = {m1, m2};
+
+    std::unordered_map<unsigned int, std::vector<Mesh_element>> nodeToElements;
+    std::unordered_map<unsigned int, Node> nodes;
+
+    for (size_t i = 0; i < mesh.size(); ++i) {
+        for (const auto& node : mesh[i].vertex) {
+            nodes.insert({node.id, node});
+            nodeToElements[node.id].push_back(mesh[i]);
+        }
+    }
+
+    std::queue<int> activeList;
+
+    // Initialize nodes and active list
+    initialize(mesh, activeList, nodeToElements);
+
+    // Update nodes using FIM
+    update(nodes, activeList);
+
+    // Output results
+    for (const auto& node : nodes) {
+        std::cout << "Node " << node.id << ": u = " << node.u << std::endl;
+    }
+
+    return 0;
 }
