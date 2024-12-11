@@ -29,6 +29,7 @@ struct Mesh_element {
 class EikonalSolver {
 public:
     EikonalSolver(std::vector<Mesh_element>& mesh) : mesh(mesh) {
+        initializeMaps();
         initialize();
     }
 
@@ -47,6 +48,15 @@ private:
     std::unordered_map<unsigned int, Node> nodes;
     std::unordered_map<unsigned int, std::vector<Mesh_element>> nodeToElements;
     std::queue<int> activeList;
+
+    void initializeMaps() {
+        for (size_t i = 0; i < mesh.size(); ++i) {
+            for (const auto& node : mesh[i].vertex) {
+                nodes.insert({node.id, node});
+                nodeToElements[node.id].push_back(mesh[i]);
+            }
+        }
+    }
 
     void initialize() {
         for (auto& m_element : mesh) {
