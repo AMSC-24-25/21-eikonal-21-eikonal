@@ -34,8 +34,9 @@ class EikonalSolver
 public:
     EikonalSolver(std::vector<Mesh_element> &mesh) : mesh(mesh)
     {
-        initialize();
+        
         initializeMaps();
+        initialize();
        
     }
 
@@ -52,25 +53,29 @@ public:
                 double previous_value = node->u;
                 node->u = solveLocal(*node);
 
+                std::cout << "node id: " << node->id << " u: " << node->u << std::endl;
+
                 if (std::abs(previous_value - node->u) < EPSILON)
-                {
-                    for (auto &neighbor : getNeighbours(*node))
+                {   
+                    std::cout <<"node value conerverged: " << node->u << std::endl;
+
+                    for (auto &neighbour : getNeighbours(*node))
                     {
-                        if (std::find(activeList.begin(), activeList.end(), neighbor->id) == activeList.end())
-                        {
-                            double &p = neighbor->u;
-                            double q = solveLocal(*neighbor);
+                        if (std::find(activeList.begin(), activeList.end(), neighbour->id) == activeList.end())
+                        {   
+                            std::cout << "non active neighbour id: " << neighbour->id << std::endl;
+
+                            double p = neighbour->u;
+                            double q = solveLocal(*neighbour);
                             if (p > q)
                             {
-                                neighbor->u = q;
-                                activeList.push_back(neighbor->id);
+                                neighbour->u = q;
+                                activeList.push_back(neighbour->id);
                             }
                         }
                     }
                     it = activeList.erase(it);
-                }
-                else
-                {
+                }else{
                     ++it;
                 }
             }
@@ -92,7 +97,7 @@ public:
 
         for (auto &mesh_element : nodeToElements[node.id])
         {
-            for (auto &mesh_node : mesh_element.vertex)
+            for (auto &mesh_node : mesh_element -> vertex)
             {
                 if (node.id != mesh_node.id && neighbour_ids.find(mesh_node.id) == neighbour_ids.end())
                 {
@@ -108,8 +113,13 @@ public:
 private:
     std::vector<Mesh_element> &mesh;
     std::unordered_map<unsigned int, Node *> nodes;
-    std::unordered_map<unsigned int, std::vector<Mesh_element>> nodeToElements;
+    std::unordered_map<unsigned int, std::vector<Mesh_element *>> nodeToElements;
     std::vector<int> activeList;
+
+    bool isInActiveList(Node &node)
+    {
+        return std::find(activeList.begin(), activeList.end(), node.id) != activeList.end();
+    }
 
     void initializeMaps()
     {
@@ -118,7 +128,7 @@ private:
             for (auto &node : mesh[i].vertex)
             {
                 nodes[node.id] = &node;
-                nodeToElements[node.id].push_back(mesh[i]);
+                nodeToElements[node.id].push_back(&mesh[i]);
             }
         }
     }
@@ -132,7 +142,12 @@ private:
                 if (node.isSource)
                 {
                     node.u = 0.0;
-                    activeList.push_back(node.id);
+                    // activeList.push_back(node.id);
+                    for(auto &neighbour : getNeighbours(node)){
+                        if(!isInActiveList(*neighbour)){
+                            activeList.push_back(neighbour->id);
+                        }
+                    }
                 }
                 else
                 {
@@ -150,22 +165,23 @@ private:
         double min_value = INF;
         std::vector<Node *> nodes_for_points;
 
-        for (auto &mesh_element : nodeToElements[node.id])
+        for (auto *mesh_element : nodeToElements[node.id])
         {
-            for (auto &mesh_node : mesh_element.vertex)
+            for (auto &mesh_node : mesh_element -> vertex)
             {
                 if (mesh_node.id != node.id)
                 {
                     nodes_for_points.push_back(nodes[mesh_node.id]);
                 }
             }
-
+            
             Eikonal::SimplexData<PHDIM> simplex{{nodes_for_points[0]->p, nodes_for_points[1]->p, node.p}};
             VectorExt values;
             values << nodes_for_points[0]->u, nodes_for_points[1]->u;
 
             Eikonal::solveEikonalLocalProblem<PHDIM> solver{simplex, values};
             auto sol = solver();
+            
             min_value = std::min(min_value, sol.value);
 
             nodes_for_points.clear();
@@ -185,7 +201,7 @@ int main()
     p3 << 1., 1.;
     p4 << 1., 0.;
 
-    Node n1 = {0, 0.0, false, p1};
+    Node n1 = {0, 0.0, true, p1};
     Node n2 = {1, 0.0, true, p2};
     Node n3 = {2, 0.0, false, p3};
     Node n4 = {3, 0.0, true, p4};
