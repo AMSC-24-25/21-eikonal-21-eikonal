@@ -26,57 +26,78 @@ struct Mesh_element {
     std::array<Node,PHDIM+1u> vertex;
 };
 
+class EikonalSolver {
+public:
+    EikonalSolver(std::vector<Mesh_element>& mesh) : mesh(mesh) {
+        initialize();
+    }
 
-void initialize( std::vector<Mesh_element>& mesh, std::queue<int>& activeList, std::unordered_map<unsigned int, std::vector<Mesh_element>>& nodeToElements) {
-    for (auto& m_element : mesh) {
-        for (auto& node : m_element.vertex) {
-            if (node.isSource) {
-                node.u = 0.0;
-            } else {
-                node.u = INF;
-            }
+    void solve() {
+        update();
+    }
+
+    void printResults() const {
+        for (const auto& node : nodes) {
+            std::cout << "Node " << node.second.id << ": u = " << node.second.u << std::endl;
         }
     }
-    
-    for (const auto& pair : nodeToElements) {
-        for (auto& mesh_element : pair.second) {
-            for (auto& node : mesh_element.vertex) {
-                if (pair.first != node.id && node.isSource) {
-                    activeList.push(pair.first);
+
+private:
+    std::vector<Mesh_element>& mesh;
+    std::unordered_map<unsigned int, Node> nodes;
+    std::unordered_map<unsigned int, std::vector<Mesh_element>> nodeToElements;
+    std::queue<int> activeList;
+
+    void initialize() {
+        for (auto& m_element : mesh) {
+            for (auto& node : m_element.vertex) {
+                if (node.isSource) {
+                    node.u = 0.0;
+                } else {
+                    node.u = INF;
+                }
+            }
+        }
+
+        for (const auto& pair : nodeToElements) {
+            for (auto& mesh_element : pair.second) {
+                for (auto& node : mesh_element.vertex) {
+                    if (pair.first != node.id && node.isSource) {
+                        activeList.push(pair.first);
+                    }
                 }
             }
         }
     }
-}
 
-double solveLocalProblem(const Node& node) {
-    // Implement the local solver here
-    // This is a placeholder implementation
-    return node.u;
-}
+    double solveLocalProblem(const Node& node) {
+        // Implement the local solver here
+        // This is a placeholder implementation
+        return node.u;
+    }
 
-void update(std::vector<Node>& nodes, std::queue<int>& activeList, ) {
-    while (!activeList.empty()) {
-        int currentNodeId = activeList.front();
-        activeList.pop();
+    void update() {
+        while (!activeList.empty()) {
+            int currentNodeId = activeList.front();
+            activeList.pop();
 
-        Node& currentNode = nodes[currentNodeId];
-        double oldU = currentNode.u;
-        double newU = solveLocalProblem(currentNode);
-        //Eikonal::solveEikonalLocalProblem<PHDIM> solver{std::move(simplex), values};
+            Node& currentNode = nodes[currentNodeId];
+            double oldU = currentNode.u;
+            double newU = solveLocalProblem(currentNode);
 
-        if (std::abs(oldU - newU) < EPSILON) {
-            currentNode.u = newU;
-            for (int neighborId : currentNode.neighbors) {
-                Node& neighbor = nodes[neighborId];
-                if (neighbor.u > newU) {
-                    neighbor.u = newU;
-                    activeList.push(neighborId);
+            if (std::abs(oldU - newU) < EPSILON) {
+                currentNode.u = newU;
+                for (int neighborId : currentNode.neighbors) {
+                    Node& neighbor = nodes[neighborId];
+                    if (neighbor.u > newU) {
+                        neighbor.u = newU;
+                        activeList.push(neighborId);
+                    }
                 }
             }
         }
     }
-}
+};
 
 int main() {
     using Point = Eikonal::Eikonal_traits<PHDIM>::Point;
@@ -101,28 +122,9 @@ int main() {
 
     std::vector<Mesh_element> mesh = {m1, m2};
 
-    std::unordered_map<unsigned int, std::vector<Mesh_element>> nodeToElements;
-    std::unordered_map<unsigned int, Node> nodes;
-
-    for (size_t i = 0; i < mesh.size(); ++i) {
-        for (const auto& node : mesh[i].vertex) {
-            nodes.insert({node.id, node});
-            nodeToElements[node.id].push_back(mesh[i]);
-        }
-    }
-
-    std::queue<int> activeList;
-
-    // Initialize nodes and active list
-    initialize(mesh, activeList, nodeToElements);
-
-    // Update nodes using FIM
-    update(nodes, activeList);
-
-    // Output results
-    for (const auto& node : nodes) {
-        std::cout << "Node " << node.id << ": u = " << node.u << std::endl;
-    }
+    EikonalSolver solver(mesh);
+    solver.solve();
+    solver.printResults();
 
     return 0;
 }
