@@ -6,6 +6,7 @@
 #include "MeshElement.hpp"
 #include "Mesh.hpp"
 #include "loadMesh.hpp"
+#include "VTKWriter.hpp"
 
 int main()
 {
@@ -25,7 +26,7 @@ int main()
 
     // Set source nodes (example: set first node as source)
     if (!mesh.nodes.empty()) {
-        mesh.nodes[1]->isSource = true;
+        mesh.nodes[51-7]->isSource = true;
     }
 
     // Initialize and run solver
@@ -33,6 +34,14 @@ int main()
     solver.printResults();
     solver.update();
     solver.printResults();
+
+    // Write solution to VTK file
+    try {
+        VTKWriter<PHDIM>::write("solution.vtk", mesh);
+    } catch (const std::runtime_error& e) {
+        std::cerr << "Error writing VTK file: " << e.what() << std::endl;
+        return 1;
+    }
 
     return 0;
 }
