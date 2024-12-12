@@ -1,4 +1,4 @@
-#ifndef LOAD_MESH_HPP
+#ifndef LOAD_MESH_HPP 
 #define LOAD_MESH_HPP
 
 #include <array>
@@ -36,8 +36,8 @@ public:
             throw std::runtime_error("Expected POINTS section in VTK file");
         }
         mesh_file >> num_of_vertices;
-        mesh_file >> section_marker;
-        int ignore;
+        std::string data_type;
+        mesh_file >> data_type; // This captures "float" or "double"
 
         mesh.Points.reserve(num_of_vertices);
         mesh.nodes.reserve(num_of_vertices);
@@ -48,13 +48,14 @@ public:
                     throw std::runtime_error("Error reading vertex coordinates");
                 }
             }
-            if(PHDIM == 2){
-                mesh_file >> ignore;
+            if (PHDIM == 2) {
+                double ignore;
+                mesh_file >> ignore; // Ignore the z-coordinate for 2D meshes
             }
+
             mesh.Points.push_back(p);
-            // Create node with shared pointer
             auto node = std::make_shared<Node<PHDIM>>(Node<PHDIM>{
-                static_cast<unsigned int>(i), 
+                static_cast<unsigned int>(i),
                 0.0,
                 false,
                 p
@@ -63,13 +64,13 @@ public:
         }
 
         mesh_file >> section_marker;
-        if (section_marker != "CELLS") {
-            throw std::runtime_error("Expected CELLS section in VTK file");
+        if (section_marker != "POLYGONS") {
+            throw std::runtime_error("Expected POLYGONS section in VTK file");
         }
 
         int num_of_mesh_elements;
-        mesh_file >> num_of_mesh_elements;
-        mesh_file >> section_marker;
+        int total_indices;
+        mesh_file >> num_of_mesh_elements >> total_indices;
 
         mesh.mesh_elements.reserve(num_of_mesh_elements);
         for (int i = 0; i < num_of_mesh_elements; ++i) {
@@ -81,7 +82,6 @@ public:
             }
 
             std::array<NodePtr<PHDIM>, PHDIM + 1> element_nodes;
-            
             for (std::size_t j = 0; j < vertices_per_element; ++j) {
                 unsigned int vertex_index;
                 mesh_file >> vertex_index;

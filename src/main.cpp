@@ -17,7 +17,7 @@ int main()
     
     // Load mesh from file
     try {
-        loadMesh<PHDIM>::init_Mesh("../tests/square.vtk", mesh);
+        loadMesh<PHDIM>::init_Mesh("../tests/m.vtk", mesh);
     } catch (const std::runtime_error& e) {
         std::cerr << "Error loading mesh: " << e.what() << std::endl;
         return 1;
