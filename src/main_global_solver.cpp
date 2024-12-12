@@ -26,7 +26,7 @@ struct Node
 
 struct Mesh_element
 {
-    std::array<Node, PHDIM + 1u> vertex;
+    std::array<Node *, PHDIM + 1u> vertex;
 };
 
 class EikonalSolver
@@ -94,12 +94,12 @@ public:
 
         for (auto &mesh_element : nodeToElements[node.id])
         {
-            for (auto &mesh_node : mesh_element -> vertex)
+            for (auto &mesh_node : mesh_element.vertex)
             {
-                if (node.id != mesh_node.id && neighbour_ids.find(mesh_node.id) == neighbour_ids.end())
+                if (node.id != mesh_node->id && neighbour_ids.find(mesh_node->id) == neighbour_ids.end())
                 {
-                    neighbour_ids.insert(mesh_node.id);
-                    neighbours.push_back(nodes[mesh_node.id]);
+                    neighbour_ids.insert(mesh_node->id);
+                    neighbours.push_back(nodes[mesh_node->id]);
                 }
             }
         }
@@ -110,7 +110,7 @@ public:
 private:
     std::vector<Mesh_element> &mesh;
     std::unordered_map<unsigned int, Node *> nodes;
-    std::unordered_map<unsigned int, std::vector<Mesh_element *>> nodeToElements;
+    std::unordered_map<unsigned int, std::vector<Mesh_element>> nodeToElements;
     std::vector<int> activeList;
 
     bool isInActiveList(Node &node)
@@ -124,8 +124,8 @@ private:
         {
             for (auto &node : mesh[i].vertex)
             {
-                nodes[node.id] = &node;
-                nodeToElements[node.id].push_back(&mesh[i]);
+                nodes[node->id] = node;
+                nodeToElements[node->id].push_back(mesh[i]);
             }
         }
     }
@@ -136,11 +136,11 @@ private:
         {
             for (auto &node : m_element.vertex)
             {
-                if (node.isSource)
+                if (node->isSource)
                 {
-                    node.u = 0.0;
+                    node->u = 0.0;
                     // activeList.push_back(node.id);
-                    for(auto &neighbour : getNeighbours(node)){
+                    for(auto &neighbour : getNeighbours(*node)){
                         if(!isInActiveList(*neighbour) && !neighbour->isSource){
                             activeList.push_back(neighbour->id);
                         }
@@ -148,7 +148,7 @@ private:
                 }
                 else
                 {
-                    node.u = INF;
+                    node->u = INF;
                 }
             }
         }
@@ -162,13 +162,13 @@ private:
         double min_value = INF;
         std::vector<Node *> nodes_for_points;
 
-        for (auto *mesh_element : nodeToElements[node.id])
+        for (auto &mesh_element : nodeToElements[node.id])
         {
-            for (auto &mesh_node : mesh_element -> vertex)
+            for (auto &mesh_node : mesh_element.vertex)
             {
-                if (mesh_node.id != node.id)
+                if (mesh_node->id != node.id)
                 {
-                    nodes_for_points.push_back(nodes[mesh_node.id]);
+                    nodes_for_points.push_back(nodes[mesh_node->id]);
                 }
             }
             
@@ -203,8 +203,8 @@ int main()
     Node n3 = {3, 0.0, false, p3};
     Node n4 = {4, 0.0, true, p4};
 
-    Mesh_element m1 = {{n1, n2, n3}};
-    Mesh_element m2 = {{n1, n4, n3}};
+    Mesh_element m1 = {{&n1, &n2, &n3}};
+    Mesh_element m2 = {{&n1, &n4, &n3}};
 
     std::vector<Mesh_element> mesh = {m1, m2};
 
