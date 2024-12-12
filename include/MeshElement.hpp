@@ -5,8 +5,9 @@
 #include <memory>
 #include "Node.hpp"
 
+template<unsigned int PHDIM>
 struct Mesh_element {
-    std::array<NodePtr, 3> vertex;
+    std::array<NodePtr<PHDIM>, PHDIM + 1> vertex;
 };
 
 #endif // MESHELEMENT_HPP

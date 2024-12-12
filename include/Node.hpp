@@ -4,9 +4,10 @@
 #include "Eikonal_traits.hpp"
 #include <memory>
 
+template<unsigned int PHDIM>
 struct Node
 {
-    using Point = Eikonal::Eikonal_traits<2>::Point;
+    using Point = typename Eikonal::Eikonal_traits<PHDIM>::Point;
 
     unsigned int id;
     double u;
@@ -14,6 +15,7 @@ struct Node
     Point p;
 };
 
-using NodePtr = std::shared_ptr<Node>;
+template<unsigned int PHDIM>
+using NodePtr = std::shared_ptr<Node<PHDIM>>;
 
 #endif // NODE_HPP
