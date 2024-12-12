@@ -1,54 +1,33 @@
-#ifndef MESH_HPP
-#define MESH_HPP
+#ifndef LOAD_MESH_HPP
+#define LOAD_MESH_HPP
+
+#include <array>
 #include <vector>
 #include <fstream>
 #include <iostream>
 #include <string>
 #include <stdexcept>
-#include "Eikonal_traits.hpp"
+#include "Mesh.hpp"
 
 template<std::size_t PHDIM>
-class Mesh {
+class loadMesh {
 public:
-    using Point = typename Eikonal::Eikonal_traits<PHDIM>::Point;
-    
-    struct Node {
-        unsigned int id;
-        double u = 0.0;
-        bool isSource = false;
-        Point p;
-    };
-    
-    struct Mesh_element {
-        std::vector<Node> vertex;  // Changed from std::array to std::vector
-        
-        // Constructor to allow dynamic sizing
-        Mesh_element() : vertex(PHDIM + 1) {}
-        
-        // Optional: Resize method if needed
-        void resize(size_t size) {
-            vertex.resize(size);
-        }
-    };
-
-    Mesh() = default;
-
-    std::vector<Mesh_element> init_Mesh(const std::string& mesh_path) {
+    static std::vector<typename Mesh<PHDIM>::Mesh_element> init_Mesh(const std::string& mesh_path, Mesh<PHDIM>& mesh) {
         std::ifstream mesh_file(mesh_path);
         if (!mesh_file.is_open()) {
             throw std::runtime_error("Unable to open mesh file: " + mesh_path);
         }
-        
-        Points.clear();
-        mesh_elements.clear();
-        
+
+        mesh.Points.clear();
+        mesh.mesh_elements.clear();
+
         std::string header_line;
         for (int i = 0; i < 4; ++i) {
             if (!std::getline(mesh_file, header_line)) {
                 throw std::runtime_error("Incomplete VTK header in mesh file");
             }
         }
-        
+
         std::string section_marker;
         int num_of_vertices;
         mesh_file >> section_marker;
@@ -57,68 +36,64 @@ public:
         }
         mesh_file >> num_of_vertices;
         mesh_file >> section_marker;
-        
-        Points.reserve(num_of_vertices);
+        int ignore;
+
+        mesh.Points.reserve(num_of_vertices);
         for (int i = 0; i < num_of_vertices; ++i) {
-            Point p;
+            typename Mesh<PHDIM>::Point p;
             for (std::size_t dim = 0; dim < PHDIM; ++dim) {
                 if (!(mesh_file >> p[dim])) {
                     throw std::runtime_error("Error reading vertex coordinates");
                 }
             }
-            Points.push_back(p);
+            if(PHDIM ==2){
+                mesh_file>>ignore;
+            }
+            mesh.Points.push_back(p);
         }
-        
+
         mesh_file >> section_marker;
         if (section_marker != "CELLS") {
             throw std::runtime_error("Expected CELLS section in VTK file");
         }
-        
+
         int num_of_mesh_elements;
         mesh_file >> num_of_mesh_elements;
         mesh_file >> section_marker;
-        
-        mesh_elements.reserve(num_of_mesh_elements);
+
+        mesh.mesh_elements.reserve(num_of_mesh_elements);
         for (int i = 0; i < num_of_mesh_elements; ++i) {
             int vertices_per_element;
             mesh_file >> vertices_per_element;
-            if (i == 0) {
-                std::cout << "vertices_per_element: " << vertices_per_element << std::endl;
-            }
+
+
+            typename Mesh<PHDIM>::Mesh_element element;
             
-            Mesh_element element;
-            // Dynamically resize if needed
-            if (vertices_per_element != static_cast<int>(PHDIM + 1)) {
-                element.resize(vertices_per_element);
-            }
+            // Handle case where vertices per element might differ
             
+
             for (std::size_t j = 0; j < vertices_per_element; ++j) {
                 unsigned int vertex_index;
                 mesh_file >> vertex_index;
-                if (vertex_index >= Points.size()) {
+
+                if (vertex_index >= mesh.Points.size()) {
                     throw std::runtime_error("Vertex index out of bounds");
                 }
-                element.vertex[j].id = vertex_index;
-                element.vertex[j].p = Points[vertex_index];
-            }
-            mesh_elements.push_back(element);
-        }
-        
-        mesh_file.close();
-        return mesh_elements;
-    }
-    
-    const std::vector<Point>& getPoints() const {
-        return Points;
-    }
-    
-    const std::vector<Mesh_element>& getMeshElements() const {
-        return mesh_elements;
-    }
 
-private:
-    const std::size_t D = PHDIM;
-    std::vector<Point> Points;
-    std::vector<Mesh_element> mesh_elements;
+                element.vertex[j].id = vertex_index;
+                element.vertex[j].p = mesh.Points[vertex_index];
+            }
+
+            mesh.mesh_elements.push_back(element);
+        }
+
+        mesh_file.close();
+        return mesh.mesh_elements;
+    }
 };
-#endif
+
+// Explicit instantiation for common use cases
+template class loadMesh<2>;
+template class loadMesh<3>;
+
+#endif // LOAD_MESH_HPP
