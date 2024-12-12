@@ -1,4 +1,3 @@
-
 #include "EikonalSolver.hpp"
 #include <iostream>
 #include <algorithm>
@@ -23,7 +22,7 @@ void EikonalSolver::update()
 
         for (auto it = activeList.begin(); it != activeList.end(); ++it)
         {
-            Node *node = nodes[*it];
+            NodePtr node = nodes[*it];
             double previous_value = node->u;
             node->u = solveLocal(*node);
 
@@ -68,10 +67,10 @@ void EikonalSolver::printResults() const
     }
 }
 
-std::vector<Node *> EikonalSolver::getNeighbours(Node &node)
+std::vector<NodePtr> EikonalSolver::getNeighbours(Node &node)
 {
     std::unordered_set<unsigned int> neighbour_ids;
-    std::vector<Node *> neighbours;
+    std::vector<NodePtr> neighbours;
 
     for (auto &mesh_element : nodeToElements[node.id])
     {
@@ -134,7 +133,7 @@ double EikonalSolver::solveLocal(Node &node)
     using VectorExt = Eikonal::Eikonal_traits<2>::VectorExt;
 
     double min_value = INF;
-    std::vector<Node *> nodes_for_points;
+    std::vector<NodePtr> nodes_for_points;
 
     for (auto &mesh_element : nodeToElements[node.id])
     {

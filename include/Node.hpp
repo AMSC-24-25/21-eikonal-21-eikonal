@@ -1,8 +1,8 @@
-
 #ifndef NODE_HPP
 #define NODE_HPP
 
 #include "Eikonal_traits.hpp"
+#include <memory>
 
 struct Node
 {
@@ -13,5 +13,7 @@ struct Node
     bool isSource;
     Point p;
 };
+
+using NodePtr = std::shared_ptr<Node>;
 
 #endif // NODE_HPP
