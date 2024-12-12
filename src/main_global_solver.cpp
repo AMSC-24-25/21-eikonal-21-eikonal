@@ -10,7 +10,7 @@
 
 #include "solveEikonalLocalProblem.hpp"
 
-const double INF = std::numeric_limits<double>::infinity();
+const double INF = 10e7;
 const double EPSILON = 1e-6;
 constexpr std::size_t PHDIM = 2;
 
@@ -43,27 +43,23 @@ public:
     void update()
     {
         int k = 0;
-        while (!activeList.empty() && k < 10)
+        while (!activeList.empty() && k < 1000)
         {
             k++;
-            std::cout << activeList.size() << std::endl;
             for (auto it = activeList.begin(); it != activeList.end();)
             {
                 Node *node = nodes[*it];
                 double previous_value = node->u;
                 node->u = solveLocal(*node);
 
-                std::cout << "node id: " << node->id << " u: " << node->u << std::endl;
-
                 if (std::abs(previous_value - node->u) < EPSILON)
                 {   
-                    std::cout <<"node value conerverged: " << node->u << std::endl;
 
                     for (auto &neighbour : getNeighbours(*node))
                     {
-                        if (std::find(activeList.begin(), activeList.end(), neighbour->id) == activeList.end())
+                        if (std::find(activeList.begin(), activeList.end(), neighbour->id) == activeList.end()
+                        && neighbour->isSource)
                         {   
-                            std::cout << "non active neighbour id: " << neighbour->id << std::endl;
 
                             double p = neighbour->u;
                             double q = solveLocal(*neighbour);
@@ -144,7 +140,7 @@ private:
                     node.u = 0.0;
                     // activeList.push_back(node.id);
                     for(auto &neighbour : getNeighbours(node)){
-                        if(!isInActiveList(*neighbour)){
+                        if(!isInActiveList(*neighbour) && !neighbour->isSource){
                             activeList.push_back(neighbour->id);
                         }
                     }
@@ -201,8 +197,8 @@ int main()
     p3 << 1., 1.;
     p4 << 1., 0.;
 
-    Node n1 = {0, 0.0, true, p1};
-    Node n2 = {1, 0.0, true, p2};
+    Node n1 = {0, 0.0, false, p1};
+    Node n2 = {1, 0.0, false, p2};
     Node n3 = {2, 0.0, false, p3};
     Node n4 = {3, 0.0, true, p4};
 
