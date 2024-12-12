@@ -12,6 +12,7 @@ int main()
 {
     constexpr unsigned int PHDIM = 2;
     using Point = Eikonal::Eikonal_traits<PHDIM>::Point;
+    using Mat = typename Eikonal::Eikonal_traits<PHDIM>::MMatrix;
 
     // Create mesh object
     Mesh<PHDIM> mesh;
@@ -29,8 +30,13 @@ int main()
         mesh.nodes[51-7]->isSource = true;
     }
 
+    // Create anisotropy matrix
+    Mat M_matrix;
+    M_matrix<<3.0,0.0,
+              0.0,9.0;
+
     // Initialize and run solver
-    EikonalSolver<PHDIM> solver(mesh.mesh_elements);
+    EikonalSolver<PHDIM> solver(mesh.mesh_elements, M_matrix);
     solver.printResults();
     solver.update();
     solver.printResults();

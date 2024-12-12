@@ -18,8 +18,9 @@ const double EPSILON = 1e-6;
 template<unsigned int PHDIM>
 class EikonalSolver
 {
+using Mat = typename Eikonal::Eikonal_traits<PHDIM>::MMatrix;
 public:
-    EikonalSolver(std::vector<Mesh_element<PHDIM>> &mesh) : mesh(mesh)
+    EikonalSolver(std::vector<Mesh_element<PHDIM>> &mesh, Mat &matrix) : mesh(mesh), mat(matrix)
     {
         initializeMaps();
         initialize();
@@ -102,6 +103,7 @@ private:
     std::unordered_map<unsigned int, NodePtr<PHDIM>> nodes;
     std::unordered_map<unsigned int, std::vector<Mesh_element<PHDIM>>> nodeToElements;
     std::vector<int> activeList;
+    Mat& mat;
 
     bool isInActiveList(Node<PHDIM> &node)
     {
@@ -161,7 +163,7 @@ private:
                 }
             }
             
-            Eikonal::SimplexData<PHDIM> simplex{{nodes_for_points[0]->p, nodes_for_points[1]->p, node.p}};
+            Eikonal::SimplexData<PHDIM> simplex{{nodes_for_points[0]->p, nodes_for_points[1]->p, node.p}, mat};
             VectorExt values;
             values << nodes_for_points[0]->u, nodes_for_points[1]->u;
 
