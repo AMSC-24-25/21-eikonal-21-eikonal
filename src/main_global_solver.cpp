@@ -41,43 +41,52 @@ public:
     }
 
     void update()
+{
+    int k = 0;
+    while (!activeList.empty() && k < 1000)
     {
-        int k = 0;
-        while (!activeList.empty() && k < 1000)
+        k++;
+        std::vector<int> toAdd;
+        std::vector<int> toRemove;
+
+        for (auto it = activeList.begin(); it != activeList.end(); ++it)
         {
-            k++;
-            for (auto it = activeList.begin(); it != activeList.end();)
+            Node *node = nodes[*it];
+            double previous_value = node->u;
+            node->u = solveLocal(*node);
+
+            if (std::abs(previous_value - node->u) < EPSILON)
             {
-                Node *node = nodes[*it];
-                double previous_value = node->u;
-                node->u = solveLocal(*node);
-
-                if (std::abs(previous_value - node->u) < EPSILON)
-                {   
-
-                    for (auto &neighbour : getNeighbours(*node))
-                    {
-                        if (std::find(activeList.begin(), activeList.end(), neighbour->id) == activeList.end()
+                for (auto &neighbour : getNeighbours(*node))
+                {
+                    if (std::find(activeList.begin(), activeList.end(), neighbour->id) == activeList.end()
                         && !neighbour->isSource)
-                        {   
-
-                            double p = neighbour->u;
-                            double q = solveLocal(*neighbour);
-                            if (p > q)
-                            {
-                                neighbour->u = q;
-                                activeList.push_back(neighbour->id);
-                                std::cout << neighbour->id << std::endl;
-                            }
+                    {
+                        double p = neighbour->u;
+                        double q = solveLocal(*neighbour);
+                        if (p > q)
+                        {
+                            neighbour->u = q;
+                            toAdd.push_back(neighbour->id);
+                            std::cout << neighbour->id << std::endl;
                         }
                     }
-                    it = activeList.erase(it);
-                }else{
-                    ++it;
                 }
+                toRemove.push_back(*it);
             }
         }
+
+        for (const auto &id : toRemove)
+        {
+            activeList.erase(std::remove(activeList.begin(), activeList.end(), id), activeList.end());
+        }
+
+        for (const auto &id : toAdd)
+        {
+            activeList.push_back(id);
+        }
     }
+}
 
     void printResults() const
     {
