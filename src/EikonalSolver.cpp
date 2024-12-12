@@ -16,10 +16,8 @@ EikonalSolver::EikonalSolver(std::vector<Mesh_element> &mesh) : mesh(mesh)
 
 void EikonalSolver::update()
 {
-    int k = 0;
-    while (!activeList.empty() && k < 1000)
+    while (!activeList.empty())
     {
-        k++;
         std::vector<int> toAdd;
         std::vector<int> toRemove;
 
