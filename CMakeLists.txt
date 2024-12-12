@@ -9,7 +9,7 @@ find_path(EIGEN3_INCLUDE_DIR Eigen/Eigen
 
 include_directories(${EIGEN3_INCLUDE_DIR} ${CMAKE_SOURCE_DIR}/include)
 
-add_definitions(-DDIMENSION=3)
+add_definitions(-DDIMENSION=2)
 
 file(GLOB LOCAL_PROBLEM_SOURCES "LocalProblem/*.cpp")
 file(GLOB PROBLEM_SOURCES "src/*.cpp")
