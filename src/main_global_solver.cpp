@@ -58,7 +58,7 @@ public:
                     for (auto &neighbour : getNeighbours(*node))
                     {
                         if (std::find(activeList.begin(), activeList.end(), neighbour->id) == activeList.end()
-                        && neighbour->isSource)
+                        && !neighbour->isSource)
                         {   
 
                             double p = neighbour->u;
@@ -67,6 +67,7 @@ public:
                             {
                                 neighbour->u = q;
                                 activeList.push_back(neighbour->id);
+                                std::cout << neighbour->id << std::endl;
                             }
                         }
                     }
@@ -197,10 +198,10 @@ int main()
     p3 << 1., 1.;
     p4 << 1., 0.;
 
-    Node n1 = {0, 0.0, false, p1};
-    Node n2 = {1, 0.0, false, p2};
-    Node n3 = {2, 0.0, false, p3};
-    Node n4 = {3, 0.0, true, p4};
+    Node n1 = {1, 0.0, false, p1};
+    Node n2 = {2, 0.0, false, p2};
+    Node n3 = {3, 0.0, false, p3};
+    Node n4 = {4, 0.0, true, p4};
 
     Mesh_element m1 = {{n1, n2, n3}};
     Mesh_element m2 = {{n1, n4, n3}};
