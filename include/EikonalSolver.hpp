@@ -15,10 +15,11 @@
 const double INF = 10e7;
 const double EPSILON = 1e-6;
 
-template<unsigned int PHDIM>
+template <unsigned int PHDIM>
 class EikonalSolver
 {
-using Mat = typename Eikonal::Eikonal_traits<PHDIM>::MMatrix;
+    using Mat = typename Eikonal::Eikonal_traits<PHDIM>::MMatrix;
+
 public:
     EikonalSolver(std::vector<Mesh_element<PHDIM>> &mesh, Mat &matrix) : mesh(mesh), mat(matrix)
     {
@@ -70,7 +71,7 @@ public:
             }
         }
     }
-    
+
     void printResults() const
     {
         for (const auto &pair : nodes)
@@ -103,7 +104,7 @@ private:
     std::unordered_map<unsigned int, NodePtr<PHDIM>> nodes;
     std::unordered_map<unsigned int, std::vector<Mesh_element<PHDIM>>> nodeToElements;
     std::vector<int> activeList;
-    Mat& mat;
+    Mat &mat;
 
     bool isInActiveList(Node<PHDIM> &node)
     {
@@ -131,8 +132,10 @@ private:
                 if (node->isSource)
                 {
                     node->u = 0.0;
-                    for(auto &neighbour : getNeighbours(*node)){
-                        if(!isInActiveList(*neighbour) && !neighbour->isSource){
+                    for (auto &neighbour : getNeighbours(*node))
+                    {
+                        if (!isInActiveList(*neighbour) && !neighbour->isSource)
+                        {
                             activeList.push_back(neighbour->id);
                         }
                     }
@@ -162,14 +165,33 @@ private:
                     nodes_for_points.push_back(nodes[mesh_node->id]);
                 }
             }
-            
-            Eikonal::SimplexData<PHDIM> simplex{{nodes_for_points[0]->p, nodes_for_points[1]->p, node.p}, mat};
-            VectorExt values;
-            values << nodes_for_points[0]->u, nodes_for_points[1]->u;
 
+            // Controllo per avere abbastanza nodi per formare un simplex di PHDIM + 1 punti
+            if (nodes_for_points.size() < PHDIM)
+            {
+                nodes_for_points.clear();
+                continue;
+            }
+
+            // Creazione dell'array di simplex con PHDIM + 1 punti
+            std::array<Point, PHDIM + 1> simplex_points;
+            for (int i = 0; i < PHDIM; ++i)
+            {
+                simplex_points[i] = nodes_for_points[i]->p;
+            }
+            simplex_points[PHDIM] = node.p; // Aggiungi il punto corrente al simplex
+
+            // Creazione dei valori estesi con PHDIM valori
+            VectorExt values;
+            for (int i = 0; i < PHDIM; ++i)
+            {
+                values[i] = nodes_for_points[i]->u;
+            }
+
+            Eikonal::SimplexData<PHDIM> simplex{simplex_points, mat};
             Eikonal::solveEikonalLocalProblem<PHDIM> solver{simplex, values};
             auto sol = solver();
-            
+
             min_value = std::min(min_value, sol.value);
 
             nodes_for_points.clear();

@@ -10,7 +10,7 @@
 
 int main()
 {
-    constexpr unsigned int PHDIM = 2;
+    constexpr unsigned int PHDIM = 3;
     using Point = Eikonal::Eikonal_traits<PHDIM>::Point;
     using Mat = typename Eikonal::Eikonal_traits<PHDIM>::MMatrix;
 
@@ -19,7 +19,7 @@ int main()
     
     // Load mesh from file
     try {
-        loadMesh<PHDIM>::init_Mesh("../tests/m.vtk", mesh);
+        loadMesh<PHDIM>::init_Mesh("../tests/torus_tetra_100.vtk", mesh);
     } catch (const std::runtime_error& e) {
         std::cerr << "Error loading mesh: " << e.what() << std::endl;
         return 1;
@@ -32,8 +32,9 @@ int main()
 
     // Create anisotropy matrix
     Mat M_matrix;
-    M_matrix<<3.0,0.0,
-              0.0,9.0;
+    M_matrix<<1.0,0.0, 0.0,
+              0.0,1.0, 0.0,
+              0.0,0.0,1.0;
 
     // Initialize and run solver
     EikonalSolver<PHDIM> solver(mesh.mesh_elements, M_matrix);

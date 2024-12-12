@@ -64,8 +64,8 @@ public:
         }
 
         mesh_file >> section_marker;
-        if (section_marker != "POLYGONS") {
-            throw std::runtime_error("Expected POLYGONS section in VTK file");
+        if (section_marker != "POLYGONS" && section_marker != "CELLS") {
+            throw std::runtime_error("Expected POLYGONS or CELLS section in VTK file");
         }
 
         int num_of_mesh_elements;
