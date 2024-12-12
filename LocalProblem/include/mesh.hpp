@@ -1,7 +1,5 @@
 #ifndef MESH_HPP
 #define MESH_HPP
-
-#include <array>
 #include <vector>
 #include <fstream>
 #include <iostream>
@@ -13,16 +11,24 @@ template<std::size_t PHDIM>
 class Mesh {
 public:
     using Point = typename Eikonal::Eikonal_traits<PHDIM>::Point;
-
+    
     struct Node {
         unsigned int id;
         double u = 0.0;
         bool isSource = false;
         Point p;
     };
-
+    
     struct Mesh_element {
-        std::array<Node, PHDIM + 1> vertex;
+        std::vector<Node> vertex;  // Changed from std::array to std::vector
+        
+        // Constructor to allow dynamic sizing
+        Mesh_element() : vertex(PHDIM + 1) {}
+        
+        // Optional: Resize method if needed
+        void resize(size_t size) {
+            vertex.resize(size);
+        }
     };
 
     Mesh() = default;
@@ -32,17 +38,17 @@ public:
         if (!mesh_file.is_open()) {
             throw std::runtime_error("Unable to open mesh file: " + mesh_path);
         }
-
+        
         Points.clear();
         mesh_elements.clear();
-
+        
         std::string header_line;
         for (int i = 0; i < 4; ++i) {
             if (!std::getline(mesh_file, header_line)) {
                 throw std::runtime_error("Incomplete VTK header in mesh file");
             }
         }
-
+        
         std::string section_marker;
         int num_of_vertices;
         mesh_file >> section_marker;
@@ -51,7 +57,7 @@ public:
         }
         mesh_file >> num_of_vertices;
         mesh_file >> section_marker;
-
+        
         Points.reserve(num_of_vertices);
         for (int i = 0; i < num_of_vertices; ++i) {
             Point p;
@@ -62,7 +68,7 @@ public:
             }
             Points.push_back(p);
         }
-
+        
         mesh_file >> section_marker;
         if (section_marker != "CELLS") {
             throw std::runtime_error("Expected CELLS section in VTK file");
@@ -71,38 +77,41 @@ public:
         int num_of_mesh_elements;
         mesh_file >> num_of_mesh_elements;
         mesh_file >> section_marker;
-
+        
         mesh_elements.reserve(num_of_mesh_elements);
         for (int i = 0; i < num_of_mesh_elements; ++i) {
             int vertices_per_element;
             mesh_file >> vertices_per_element;
+            if (i == 0) {
+                std::cout << "vertices_per_element: " << vertices_per_element << std::endl;
+            }
             
-            /**if (vertices_per_element != static_cast<int>(PHDIM + 1)) {
-                throw std::runtime_error("Vertex count mismatch for mesh dimension");
-            }**/
             Mesh_element element;
-            for (std::size_t j = 0; j < PHDIM + 1; ++j) {
+            // Dynamically resize if needed
+            if (vertices_per_element != static_cast<int>(PHDIM + 1)) {
+                element.resize(vertices_per_element);
+            }
+            
+            for (std::size_t j = 0; j < vertices_per_element; ++j) {
                 unsigned int vertex_index;
                 mesh_file >> vertex_index;
-
                 if (vertex_index >= Points.size()) {
                     throw std::runtime_error("Vertex index out of bounds");
                 }
-
                 element.vertex[j].id = vertex_index;
                 element.vertex[j].p = Points[vertex_index];
             }
             mesh_elements.push_back(element);
         }
-
+        
         mesh_file.close();
         return mesh_elements;
     }
-
+    
     const std::vector<Point>& getPoints() const {
         return Points;
     }
-
+    
     const std::vector<Mesh_element>& getMeshElements() const {
         return mesh_elements;
     }
@@ -112,5 +121,4 @@ private:
     std::vector<Point> Points;
     std::vector<Mesh_element> mesh_elements;
 };
-
 #endif
