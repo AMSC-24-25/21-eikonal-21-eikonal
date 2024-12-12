@@ -12,13 +12,14 @@
 template<std::size_t PHDIM>
 class loadMesh {
 public:
-    static std::vector<typename Mesh<PHDIM>::Mesh_element> init_Mesh(const std::string& mesh_path, Mesh<PHDIM>& mesh) {
+    static std::vector<Mesh_element<PHDIM>> init_Mesh(const std::string& mesh_path, Mesh<PHDIM>& mesh) {
         std::ifstream mesh_file(mesh_path);
         if (!mesh_file.is_open()) {
             throw std::runtime_error("Unable to open mesh file: " + mesh_path);
         }
 
         mesh.Points.clear();
+        mesh.nodes.clear();
         mesh.mesh_elements.clear();
 
         std::string header_line;
@@ -39,6 +40,7 @@ public:
         int ignore;
 
         mesh.Points.reserve(num_of_vertices);
+        mesh.nodes.reserve(num_of_vertices);
         for (int i = 0; i < num_of_vertices; ++i) {
             typename Mesh<PHDIM>::Point p;
             for (std::size_t dim = 0; dim < PHDIM; ++dim) {
@@ -46,10 +48,18 @@ public:
                     throw std::runtime_error("Error reading vertex coordinates");
                 }
             }
-            if(PHDIM ==2){
-                mesh_file>>ignore;
+            if(PHDIM == 2){
+                mesh_file >> ignore;
             }
             mesh.Points.push_back(p);
+            // Create node with shared pointer
+            auto node = std::make_shared<Node<PHDIM>>(Node<PHDIM>{
+                static_cast<unsigned int>(i), 
+                0.0,
+                false,
+                p
+            });
+            mesh.nodes.push_back(node);
         }
 
         mesh_file >> section_marker;
@@ -66,25 +76,24 @@ public:
             int vertices_per_element;
             mesh_file >> vertices_per_element;
 
+            if (vertices_per_element != PHDIM + 1) {
+                throw std::runtime_error("Invalid number of vertices per element");
+            }
 
-            typename Mesh<PHDIM>::Mesh_element element;
+            std::array<NodePtr<PHDIM>, PHDIM + 1> element_nodes;
             
-            // Handle case where vertices per element might differ
-            
-
             for (std::size_t j = 0; j < vertices_per_element; ++j) {
                 unsigned int vertex_index;
                 mesh_file >> vertex_index;
 
-                if (vertex_index >= mesh.Points.size()) {
+                if (vertex_index >= mesh.nodes.size()) {
                     throw std::runtime_error("Vertex index out of bounds");
                 }
 
-                element.vertex[j].id = vertex_index;
-                element.vertex[j].p = mesh.Points[vertex_index];
+                element_nodes[j] = mesh.nodes[vertex_index];
             }
 
-            mesh.mesh_elements.push_back(element);
+            mesh.mesh_elements.push_back(Mesh_element<PHDIM>{element_nodes});
         }
 
         mesh_file.close();
