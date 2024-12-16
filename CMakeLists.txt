@@ -3,13 +3,14 @@ project(EikonalSolver)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
+set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
 
 find_path(EIGEN3_INCLUDE_DIR Eigen/Eigen
   HINTS ${mkEigenInc} $ENV{mkEigenInc})
 
 include_directories(${EIGEN3_INCLUDE_DIR} ${CMAKE_SOURCE_DIR}/include)
 
-add_definitions(-DDIMENSION=2)
+add_definitions(-DDIMENSION=3)
 
 file(GLOB LOCAL_PROBLEM_SOURCES "LocalProblem/*.cpp")
 file(GLOB PROBLEM_SOURCES "src/*.cpp")

@@ -1,12 +1,16 @@
 #include <iostream>
 #include <vector>
 #include <memory>
+// Remove comments from the following line to enable parallel solver
+//#include "ParallelEikonalSolver.hpp"
 #include "EikonalSolver.hpp"
+#include <chrono>
 #include "Node.hpp"
 #include "MeshElement.hpp"
 #include "Mesh.hpp"
 #include "loadMesh.hpp"
 #include "VTKWriter.hpp"
+
 
 int main()
 {
@@ -74,15 +78,26 @@ int main()
 #endif
 
     // Initialize and run solver
+    // ParallelEikonalSolver<PHDIM> solver(mesh.mesh_elements, M_matrix);
     EikonalSolver<PHDIM> solver(mesh.mesh_elements, M_matrix);
     solver.printResults();
+
+    // Measure time for update
+    // auto start = std::chrono::high_resolution_clock::now();
+    // solver.update();
+    // auto end = std::chrono::high_resolution_clock::now();
+    // std::chrono::duration<double> duration = end - start;
+    // std::cout << "Time taken for update: " << duration.count() << " seconds" << std::endl;
+
     solver.update();
+
     solver.printResults();
 
     // Write solution to VTK file
     try
     {
         VTKWriter<PHDIM>::write("solution.vtk", mesh);
+        //VTKWriter<PHDIM>::write("parallel_solution.vtk", mesh);
     }
     catch (const std::runtime_error &e)
     {
