@@ -128,6 +128,9 @@ public:
      * 
      * @param node The node whose neighbours are to be found.
      * @return std::vector<NodePtr<PHDIM>> Vector of neighbouring node pointers.
+     * @note LF: this is got to be costly if done every time! One could construnct a vector of vectors
+     * to store for every nodes its neighbour. Precomputing uses up more memory but iit may
+     * save considerable time.
      */
     std::vector<NodePtr<PHDIM>> getNeighbours(Node<PHDIM>& node)
     {
