@@ -30,3 +30,12 @@
 *.exe
 *.out
 *.app
+
+# Other
+LocalProblem/main_eikonal
+LocalProblem/main_eikonal2D
+LocalProblem/main_eikonal3D
+LocalProblem/make.dep
+.vscode/
+/build/
+
