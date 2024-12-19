@@ -112,28 +112,17 @@ parallel solver. The parallel solver has shown excellent scaling properties. <br
 
 The following are some examples visualized using Paraview:
 <figure>
-    <img src="images/square-two.png" width="400"
-         alt="Square, two sources">
-    <figcaption>2D square with two wave sources.</figcaption>
+    <img src="images/solution2D.png" width="400"
+         alt="Square, one source">
+    <figcaption>2D square with one wave source.</figcaption>
 </figure>
 
 <figure>
-    <img src="images/bunny.png" width="400"
-         alt="Square, two sources">
-    <figcaption>Stanford Bunny model.</figcaption>
+    <img src="images/solution3D.png" width="400"
+         alt="Torus, one source">
+    <figcaption>3D square with one wave source.</figcaption>
 </figure>
 
-<figure>
-    <img src="images/lucy.png" width="700"
-         alt="Square, two sources">
-    <figcaption> Lucy model with one wave source.</figcaption>
-</figure>
-
-<figure>
-    <img src="images/cube.png" width="400"
-         alt="Cube, two sources">
-    <figcaption>3D cube with two wave sources.</figcaption>
-</figure>
 
 <br>
 
