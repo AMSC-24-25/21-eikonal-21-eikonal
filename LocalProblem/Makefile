@@ -7,7 +7,8 @@ OPTFLAGS=-O3 -funroll-all-loops
 #OPTFLAGS=-O3 -funroll-all-loops -pg -g # Se si vuole il profiler
 
 VERBOSITY=NOVERBOSE
-EIGEN_DIR=/usr/local/include/eigen3/# Here where you have the Eigine library headers
+# Here where you have the Eigine library headers
+EIGEN_DIR=${mkEigenInc}
 #PYBIND11_DIR=#
 #PYBIND11_DIR=../extern/pybind11/include/
 STDFLAGS=-std=c++20
