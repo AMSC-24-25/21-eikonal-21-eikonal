@@ -117,11 +117,15 @@ The following are some examples visualized using Paraview:
     <figcaption>2D square with one wave source.</figcaption>
 </figure>
 
+![2D Animation](images/animation2D.gif)
+
 <figure>
     <img src="images/solution3D.png" width="400"
          alt="Torus, one source">
     <figcaption>3D square with one wave source.</figcaption>
 </figure>
+
+![3D Animation](images/animation3D.gif)
 
 
 <br>
